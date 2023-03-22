@@ -1,8 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, QuerierWrapper};
-use cw3::DepositInfo;
+use cw3::{Ballot, DepositInfo, Proposal};
 use cw4::Cw4Contract;
-use cw_storage_plus::Item;
+use cw_storage_plus::{Item, Map};
 use cw_utils::{Duration, Threshold};
 
 use crate::error::ContractError;
@@ -55,3 +55,5 @@ impl Config {
 
 // unique items
 pub const CONFIG: Item<Config> = Item::new("config");
+pub const BALLOTS: Map<(u64, &Addr), Ballot> = Map::new("votes_v2");
+pub const PROPOSALS: Map<u64, Proposal> = Map::new("proposals_v2");
