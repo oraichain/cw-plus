@@ -43,6 +43,9 @@ pub enum ExecuteMsg {
     MemberChangedHook(MemberChangedHookMsg),
 }
 
+#[cw_serde]
+pub struct MigrateMsg {}
+
 // We can also add this as a cw3 extension
 #[cw_serde]
 #[derive(QueryResponses)]
