@@ -7,20 +7,21 @@ use cosmwasm_std::{
     Response, StdResult,
 };
 
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
 
 use cw3::{
     Ballot, Proposal, ProposalListResponse, ProposalResponse, Status, Vote, VoteInfo,
     VoteListResponse, VoteResponse, VoterDetail, VoterListResponse, VoterResponse, Votes,
 };
-use cw3_fixed_multisig::state::{next_id, BALLOTS, PROPOSALS};
+use cw3_fixed_multisig::state::next_id;
 use cw4::{Cw4Contract, MemberChangedHookMsg, MemberDiff};
 use cw_storage_plus::Bound;
 use cw_utils::{maybe_addr, Expiration, ThresholdResponse};
 
 use crate::error::ContractError;
+use crate::migrate::{migrate_ballots, migrate_proposal};
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, BALLOTS, CONFIG, PROPOSALS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw3-flex-multisig";
@@ -84,8 +85,16 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let total_migrate_proposals = migrate_proposal(deps.storage, env.contract.address)?;
+    let total_migrate_ballots = migrate_ballots(deps.storage, deps.api)?;
+    Ok(Response::new()
+        .add_attribute("action", "migrate")
+        .add_attribute(
+            "migrate_proposals_size",
+            total_migrate_proposals.to_string(),
+        )
+        .add_attribute("migrate_ballots_size", total_migrate_ballots.to_string()))
 }
 
 pub fn execute_propose(
