@@ -14,7 +14,7 @@ use cw_utils::maybe_addr;
 
 use crate::error::ContractError;
 use crate::helpers::validate_unique_members;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{ADMIN, HOOKS, MEMBERS, TOTAL};
 
 // version info for migration info
@@ -218,4 +218,9 @@ pub fn query_list_members(
         .collect::<StdResult<_>>()?;
 
     Ok(MemberListResponse { members })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default())
 }
