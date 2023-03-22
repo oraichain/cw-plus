@@ -3,19 +3,19 @@ use std::cmp::Ordering;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, BlockInfo, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Response, StdResult,
+    to_binary, Addr, Api, Binary, BlockInfo, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, QuerierWrapper, Response, StdResult, Storage,
 };
 
-use cw2::{get_contract_version, set_contract_version};
+use cw2::set_contract_version;
 
 use cw3::{
     Ballot, Proposal, ProposalListResponse, ProposalResponse, Status, Vote, VoteInfo,
     VoteListResponse, VoteResponse, VoterDetail, VoterListResponse, VoterResponse, Votes,
 };
 use cw3_fixed_multisig::state::next_id;
-use cw4::{Cw4Contract, MemberChangedHookMsg, MemberDiff};
-use cw_storage_plus::Bound;
+use cw4::{Cw4Contract, MemberChangedHookMsg, MemberDiff, MEMBERS_KEY};
+use cw_storage_plus::{Bound, Map};
 use cw_utils::{maybe_addr, Expiration, ThresholdResponse};
 
 use crate::error::ContractError;
@@ -88,6 +88,7 @@ pub fn execute(
 pub fn migrate(deps: DepsMut, env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let total_migrate_proposals = migrate_proposal(deps.storage, env.contract.address)?;
     let total_migrate_ballots = migrate_ballots(deps.storage, deps.api)?;
+    // Ok(Response::default())
     Ok(Response::new()
         .add_attribute("action", "migrate")
         .add_attribute(
@@ -120,9 +121,7 @@ pub fn execute_propose(
     // therefore "vote", but they aren't allowed to vote otherwise.
     // Such vote is also special, because despite having 0 weight it still counts when
     // counting threshold passing
-    let vote_power = cfg
-        .group_addr
-        .is_member(&deps.querier, &info.sender, None)?
+    let vote_power = is_member(deps.storage, &deps.querier, deps.api, &info.sender, None)?
         .ok_or(ContractError::Unauthorized {})?;
 
     // max expires also used as default
@@ -469,10 +468,32 @@ fn list_votes(
     Ok(VoteListResponse { votes })
 }
 
+/// Check if this address is a member and returns its weight.
+/// We dont use the group addr's is_member function because it queries using the key as &Addr, not Vec<u8> of CannonicalAddr in the latest version
+/// The current production group addr on Oraichain is using the v0.13.2 version of CosmWasm, which uses CannonicalAddr
+fn is_member(
+    storage: &dyn Storage,
+    querier: &QuerierWrapper,
+    api: &dyn Api,
+    member: &Addr,
+    height: Option<u64>,
+) -> StdResult<Option<u64>> {
+    let cfg = CONFIG.load(storage)?;
+    match height {
+        Some(height) => cfg
+            .group_addr
+            .member_at_height(querier, member.to_string(), height.into()),
+        None => Map::new(MEMBERS_KEY).query(
+            querier,
+            cfg.group_addr.addr(),
+            api.addr_canonicalize(member.as_str())?.to_vec(),
+        ),
+    }
+}
+
 fn query_voter(deps: Deps, voter: String) -> StdResult<VoterResponse> {
-    let cfg = CONFIG.load(deps.storage)?;
     let voter_addr = deps.api.addr_validate(&voter)?;
-    let weight = cfg.group_addr.is_member(&deps.querier, &voter_addr, None)?;
+    let weight = is_member(deps.storage, &deps.querier, deps.api, &voter_addr, None)?;
 
     Ok(VoterResponse { weight })
 }
