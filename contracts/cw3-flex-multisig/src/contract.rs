@@ -479,7 +479,7 @@ fn is_member(
     height: Option<u64>,
 ) -> StdResult<Option<u64>> {
     let cfg = CONFIG.load(storage)?;
-    match height {
+    let mut old_ver_height = match height {
         Some(height) => cfg
             .group_addr
             .member_at_height(querier, member.to_string(), height.into()),
@@ -488,7 +488,12 @@ fn is_member(
             cfg.group_addr.addr(),
             api.addr_canonicalize(member.as_str())?.to_vec(),
         ),
+    }?;
+    // if None then we try to query using the new way
+    if old_ver_height.is_none() {
+        old_ver_height = Map::new(MEMBERS_KEY).query(querier, cfg.group_addr.addr(), member)?;
     }
+    Ok(old_ver_height)
 }
 
 fn query_voter(deps: Deps, voter: String) -> StdResult<VoterResponse> {
