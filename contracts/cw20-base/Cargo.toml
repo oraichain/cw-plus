@@ -20,8 +20,8 @@ library = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cw-utils = { workspace = true }
-cw2 = { path = "../../packages/cw2", version = "1.0.1" }
-cw20 = { path = "../../packages/cw20", version = "1.0.1" }
+cw2 = { path = "../../packages/cw2" }
+cw20 = { path = "../../packages/cw20" }
 cw-storage-plus = { workspace = true }
 cosmwasm-std = { workspace = true }
 schemars = { workspace = true }
@@ -30,4 +30,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.23" }
 
 [dev-dependencies]
-cw-multi-test = "0.16.1"
+cw-multi-test = { workspace = true }

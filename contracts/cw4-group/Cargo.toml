@@ -28,9 +28,9 @@ library = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cw-utils = { workspace = true }
-cw2 = { path = "../../packages/cw2", version = "1.0.1" }
-cw4 = { path = "../../packages/cw4", version = "1.0.1" }
-cw-controllers = { path = "../../packages/controllers", version = "1.0.1" }
+cw2 = { path = "../../packages/cw2" }
+cw4 = { path = "../../packages/cw4" }
+cw-controllers = { path = "../../packages/controllers" }
 cw-storage-plus = { workspace = true }
 cosmwasm-std = { workspace = true }
 schemars = { workspace = true }

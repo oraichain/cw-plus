@@ -7,6 +7,7 @@ cosmwasm-std = { git = "https://github.com/oraichain/cosmwasm.git" }
 cosmwasm-storage = { git = "https://github.com/oraichain/cosmwasm.git" }
 cw-storage-plus = { git = "https://github.com/oraichain/cw-storage-plus.git" }
 cw-utils = { git = "https://github.com/oraichain/cw-utils.git" }
+cw-multi-test = { git = "https://github.com/oraichain/cw-multi-test.git", branch = "oraichain" }
 schemars = "0.8.3"
 
 [profile.release.package.cw1-subkeys]

@@ -21,9 +21,9 @@ test-utils = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cw-utils = { workspace = true }
-cw1 = { path = "../../packages/cw1", version = "1.0.1" }
-cw2 = { path = "../../packages/cw2", version = "1.0.1" }
-cw1-whitelist = { path = "../cw1-whitelist", version = "1.0.1", features = ["library"] }
+cw1 = { path = "../../packages/cw1" }
+cw2 = { path = "../../packages/cw2" }
+cw1-whitelist = { path = "../cw1-whitelist", features = ["library"] }
 cosmwasm-std = { workspace = true, features = ["staking"] }
 cw-storage-plus = { workspace = true }
 schemars = { workspace = true }
@@ -32,4 +32,4 @@ thiserror = "1.0.23"
 semver = "1"
 
 [dev-dependencies]
-cw1-whitelist = { path = "../cw1-whitelist", version = "1.0.1", features = ["library", "test-utils"] }
+cw1-whitelist = { path = "../cw1-whitelist", features = ["library", "test-utils"] }
