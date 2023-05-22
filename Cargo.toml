@@ -1,6 +1,14 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
 
+[workspace.dependencies]
+cosmwasm-schema = { git = "https://github.com/oraichain/cosmwasm.git" }
+cosmwasm-std = { git = "https://github.com/oraichain/cosmwasm.git" }
+cosmwasm-storage = { git = "https://github.com/oraichain/cosmwasm.git" }
+cw-storage-plus = { git = "https://github.com/oraichain/cw-storage-plus.git" }
+cw-utils = { git = "https://github.com/oraichain/cw-utils.git" }
+schemars = "0.8.3"
+
 [profile.release.package.cw1-subkeys]
 codegen-units = 1
 incremental = false

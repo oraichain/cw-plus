@@ -9,8 +9,8 @@ repository = "https://github.com/CosmWasm/cw-plus"
 homepage = "https://cosmwasm.com"
 
 [dependencies]
-cw-storage-plus = "1.0.1"
+cw-storage-plus = { workspace = true }
 cosmwasm-schema = "1.1.0"
 cosmwasm-std = "1.1.0"
-schemars = "0.8.1"
+schemars = { workspace = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
