@@ -4,7 +4,10 @@ use cw20::{
     SpenderAllowanceInfo,
 };
 
-use crate::state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES};
+use crate::{
+    msg::TopHoldersResponse,
+    state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES},
+};
 use cw_storage_plus::Bound;
 
 // settings for pagination
@@ -76,6 +79,21 @@ pub fn query_all_accounts(
         .collect::<StdResult<_>>()?;
 
     Ok(AllAccountsResponse { accounts })
+}
+
+pub fn query_top_holders(deps: Deps, limit: Option<u32>) -> StdResult<TopHoldersResponse> {
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    let mut holders = BALANCES
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+
+    holders.sort_by(|a, b| b.1.cmp(&a.1));
+    if limit < holders.len() {
+        holders = holders[0..limit].to_vec();
+    }
+
+    Ok(TopHoldersResponse { holders })
 }
 
 #[cfg(test)]

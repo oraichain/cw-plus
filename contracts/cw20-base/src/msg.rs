@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, StdError, StdResult, Uint128};
 use cw20::{Cw20Coin, Logo, MinterResponse};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -71,6 +71,11 @@ impl InstantiateMsg {
 }
 
 #[cw_serde]
+pub struct TopHoldersResponse {
+    pub holders: Vec<(Addr, Uint128)>,
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Returns the current balance of the given address, 0 if unset.
@@ -110,6 +115,10 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+
+    #[returns(TopHoldersResponse)]
+    TopHolders { limit: Option<u32> },
+
     /// Only with "marketing" extension
     /// Returns more metadata on the contract to display in the client:
     /// - description, logo, project url, etc.
