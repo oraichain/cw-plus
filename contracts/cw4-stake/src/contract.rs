@@ -90,7 +90,7 @@ pub fn execute_bond(
     let amount = match (&cfg.denom, &amount) {
         (Denom::Native(want), Balance::Native(have)) => must_pay_funds(have, want),
         (Denom::Cw20(want), Balance::Cw20(have)) => {
-            if want == &have.address {
+            if want == have.address {
                 Ok(have.amount)
             } else {
                 Err(ContractError::InvalidDenom(want.into()))
@@ -284,7 +284,7 @@ pub fn execute_claim(
 
 #[inline]
 fn coin_to_string(amount: Uint128, denom: &str) -> String {
-    format!("{} {}", amount, denom)
+    format!("{amount} {denom}")
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -502,7 +502,7 @@ mod tests {
         // this is only valid if we are not doing a historical query
         if height.is_none() {
             // compute expected metrics
-            let weights = vec![user1_weight, user2_weight, user3_weight];
+            let weights = [user1_weight, user2_weight, user3_weight];
             let sum: u64 = weights.iter().map(|x| x.unwrap_or_default()).sum();
             let count = weights.iter().filter(|x| x.is_some()).count();
 
@@ -931,7 +931,7 @@ mod tests {
         let add_msg2 = ExecuteMsg::AddHook {
             addr: contract2.clone(),
         };
-        for msg in vec![add_msg, add_msg2] {
+        for msg in [add_msg, add_msg2] {
             let _ = execute(deps.as_mut(), mock_env(), admin_info.clone(), msg).unwrap();
         }
 

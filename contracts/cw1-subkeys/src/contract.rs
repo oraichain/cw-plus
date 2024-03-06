@@ -549,8 +549,7 @@ mod tests {
             let item = self.spenders.entry(spender).or_default();
             assert!(
                 item.allowances_expire.is_none(),
-                "Allowances expiration for spender {} already configured",
-                spender
+                "Allowances expiration for spender {spender} already configured",
             );
             item.allowances_expire = Some(expires);
             self
@@ -560,8 +559,7 @@ mod tests {
             let item = self.spenders.entry(spender).or_default();
             assert!(
                 item.permissions.is_none(),
-                "Permissions for spender {} already configured",
-                spender
+                "Permissions for spender {spender} already configured",
             );
             item.permissions = Some(permissions);
             self
@@ -904,7 +902,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -933,7 +931,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1036,7 +1034,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1078,7 +1076,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1117,7 +1115,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1156,7 +1154,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1202,7 +1200,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1249,7 +1247,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1364,7 +1362,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1405,7 +1403,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1446,7 +1444,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1486,7 +1484,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1519,7 +1517,7 @@ mod tests {
             .unwrap();
 
             assert_eq!(rsp.messages, vec![]);
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1703,7 +1701,7 @@ mod tests {
                 rsp.messages,
                 msgs.into_iter().map(SubMsg::new).collect::<Vec<_>>()
             );
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1870,7 +1868,7 @@ mod tests {
                 rsp.messages,
                 msgs.into_iter().map(SubMsg::new).collect::<Vec<_>>()
             );
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
 
             assert_eq!(
@@ -1905,7 +1903,7 @@ mod tests {
                 rsp.messages,
                 msgs.into_iter().map(SubMsg::new).collect::<Vec<_>>()
             );
-            assert_eq!(rsp.events, vec![]);
+            assert!(rsp.events.is_empty());
             assert_eq!(rsp.data, None);
         }
 
@@ -1973,7 +1971,7 @@ mod tests {
                     rsp.messages,
                     msgs.into_iter().map(SubMsg::new).collect::<Vec<_>>()
                 );
-                assert_eq!(rsp.events, vec![]);
+                assert!(rsp.events.is_empty());
                 assert_eq!(rsp.data, None);
             }
         }
@@ -2019,7 +2017,7 @@ mod tests {
                     rsp.messages,
                     msgs.into_iter().map(SubMsg::new).collect::<Vec<_>>()
                 );
-                assert_eq!(rsp.events, vec![]);
+                assert!(rsp.events.is_empty());
                 assert_eq!(rsp.data, None);
             }
         }
@@ -2099,8 +2097,7 @@ mod tests {
                 assert_eq!(
                     resp,
                     CanExecuteResponse { can_execute: true },
-                    "Original message: {:#?}",
-                    msg
+                    "Original message: {msg:#?}",
                 );
             }
         }
@@ -2168,8 +2165,7 @@ mod tests {
                 assert_eq!(
                     resp,
                     CanExecuteResponse { can_execute: false },
-                    "Original message: {:#?}",
-                    msg
+                    "Original message: {msg:#?}",
                 );
             }
         }
@@ -2218,8 +2214,7 @@ mod tests {
                 assert_eq!(
                     resp,
                     CanExecuteResponse { can_execute: true },
-                    "Original message: {:#?}",
-                    msg
+                    "Original message: {msg:#?}",
                 );
             }
         }
