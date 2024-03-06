@@ -1,7 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{CosmosMsg, Empty};
-use cw3::{UncheckedDepositInfo, Vote};
-use cw4::MemberChangedHookMsg;
+use cw3::{DepositInfo, UncheckedDepositInfo, Vote};
+use cw4::{Cw4Contract, MemberChangedHookMsg};
 use cw_utils::{Duration, Expiration, Threshold};
 
 use crate::state::Executor;
@@ -41,6 +41,17 @@ pub enum ExecuteMsg {
     },
     /// Handles update hook messages from the group contract
     MemberChangedHook(MemberChangedHookMsg),
+    UpdateConfig {
+        threshold: Option<Threshold>,
+        max_voting_period: Option<Duration>,
+        // Total weight and voters are queried from this contract
+        group_addr: Option<Cw4Contract>,
+        // who is able to execute passed proposals
+        // None means that anyone can execute
+        executor: Option<Executor>,
+        /// The price, if any, of creating a new proposal.
+        proposal_deposit: Option<DepositInfo>,
+    },
 }
 
 #[cw_serde]

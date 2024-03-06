@@ -10,18 +10,17 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 
 use cw3::{
-    Ballot, Proposal, ProposalListResponse, ProposalResponse, Status, Vote, VoteInfo,
+    Ballot, DepositInfo, Proposal, ProposalListResponse, ProposalResponse, Status, Vote, VoteInfo,
     VoteListResponse, VoteResponse, VoterDetail, VoterListResponse, VoterResponse, Votes,
 };
 use cw3_fixed_multisig::state::next_id;
 use cw4::{Cw4Contract, MemberChangedHookMsg, MemberDiff, MEMBERS_KEY};
 use cw_storage_plus::{Bound, Map};
-use cw_utils::{maybe_addr, Expiration, ThresholdResponse};
+use cw_utils::{maybe_addr, Duration, Expiration, Threshold, ThresholdResponse};
 
 use crate::error::ContractError;
-use crate::migrate::{migrate_ballots, migrate_proposal};
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use crate::state::{Config, BALLOTS, CONFIG, PROPOSALS};
+use crate::state::{Config, Executor, BALLOTS, CONFIG, PROPOSALS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw3-flex-multisig";
@@ -81,21 +80,52 @@ pub fn execute(
         ExecuteMsg::MemberChangedHook(MemberChangedHookMsg { diffs }) => {
             execute_membership_hook(deps, env, info, diffs)
         }
+        ExecuteMsg::UpdateConfig {
+            threshold,
+            max_voting_period,
+            group_addr,
+            executor,
+            proposal_deposit,
+        } => execute_update_config(
+            deps,
+            env,
+            info,
+            threshold,
+            max_voting_period,
+            group_addr,
+            executor,
+            proposal_deposit,
+        ),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    let total_migrate_proposals = migrate_proposal(deps.storage, env.contract.address)?;
-    let total_migrate_ballots = migrate_ballots(deps.storage, deps.api)?;
-    // Ok(Response::default())
-    Ok(Response::new()
-        .add_attribute("action", "migrate")
-        .add_attribute(
-            "migrate_proposals_size",
-            total_migrate_proposals.to_string(),
-        )
-        .add_attribute("migrate_ballots_size", total_migrate_ballots.to_string()))
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::new().add_attribute("action", "migrate"))
+}
+
+pub fn execute_update_config(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    threshold: Option<Threshold>,
+    max_voting_period: Option<Duration>,
+    group_addr: Option<Cw4Contract>,
+    executor: Option<Executor>,
+    proposal_deposit: Option<DepositInfo>,
+) -> Result<Response<Empty>, ContractError> {
+    //only allow the contract to update itself through vote
+    if info.sender.ne(&env.contract.address) {
+        return Err(ContractError::Unauthorized {});
+    }
+    let mut cfg = CONFIG.load(deps.storage)?;
+    cfg.threshold = threshold.unwrap_or(cfg.threshold);
+    cfg.max_voting_period = max_voting_period.unwrap_or(cfg.max_voting_period);
+    cfg.group_addr = group_addr.unwrap_or(cfg.group_addr);
+    cfg.executor = executor;
+    cfg.proposal_deposit = proposal_deposit;
+    CONFIG.save(deps.storage, &cfg)?;
+    Ok(Response::new().add_attribute("action", "update_config"))
 }
 
 pub fn execute_propose(
@@ -844,6 +874,87 @@ mod tests {
                 weight: 1
             }]
         );
+    }
+
+    #[test]
+    fn test_update_config() {
+        let init_funds = coins(10, "BTC");
+        let mut app = mock_app(&init_funds);
+
+        let required_weight = 4;
+        let voting_period = Duration::Time(2000000);
+        let (flex_addr, _) =
+            setup_test_case_fixed(&mut app, required_weight, voting_period, init_funds, false);
+
+        let config: Config = app
+            .wrap()
+            .query_wasm_smart(flex_addr.clone(), &QueryMsg::Config {})
+            .unwrap();
+        assert_eq!(
+            config,
+            Config {
+                threshold: Threshold::AbsoluteCount { weight: 4 },
+                max_voting_period: Duration::Time(2000000),
+                group_addr: Cw4Contract(Addr::unchecked("contract0".to_string())),
+                executor: None,
+                proposal_deposit: None,
+            }
+        );
+
+        // case 1: unauthorized config update
+        let err = app
+            .execute_contract(
+                Addr::unchecked("unauthorized addr"),
+                flex_addr.clone(),
+                &ExecuteMsg::UpdateConfig {
+                    threshold: None,
+                    max_voting_period: None,
+                    group_addr: None,
+                    executor: None,
+                    proposal_deposit: None,
+                },
+                &[],
+            )
+            .unwrap_err();
+        assert_eq!(ContractError::Unauthorized {}, err.downcast().unwrap());
+
+        // case 2: can update
+        app.execute_contract(
+            flex_addr.clone(),
+            flex_addr.clone(),
+            &ExecuteMsg::UpdateConfig {
+                threshold: Some(Threshold::AbsoluteCount { weight: 10 }),
+                max_voting_period: Some(Duration::Height(100)),
+                group_addr: Some(Cw4Contract(Addr::unchecked("contract1".to_string()))),
+                executor: Some(crate::state::Executor::Member),
+                proposal_deposit: Some(DepositInfo {
+                    amount: Uint128::from(10u64),
+                    denom: cw20::Denom::Native("orai".to_string()),
+                    refund_failed_proposals: true,
+                }),
+            },
+            &[],
+        )
+        .unwrap();
+
+        let config: Config = app
+            .wrap()
+            .query_wasm_smart(flex_addr.clone(), &QueryMsg::Config {})
+            .unwrap();
+        assert_eq!(
+            config,
+            Config {
+                threshold: Threshold::AbsoluteCount { weight: 10 },
+                max_voting_period: Duration::Height(100),
+                group_addr: Cw4Contract(Addr::unchecked("contract1".to_string())),
+                executor: Some(crate::state::Executor::Member),
+                proposal_deposit: Some(DepositInfo {
+                    amount: Uint128::from(10u64),
+                    denom: cw20::Denom::Native("orai".to_string()),
+                    refund_failed_proposals: true,
+                }),
+            }
+        )
     }
 
     #[test]
