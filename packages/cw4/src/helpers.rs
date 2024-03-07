@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_json_binary, Addr, CosmosMsg, CustomQuery, QuerierWrapper, QueryRequest, StdResult, WasmMsg,
-    WasmQuery,
+    to_json_binary, Addr, Api, CosmosMsg, CustomQuery, QuerierWrapper, QueryRequest, StdResult, WasmMsg, WasmQuery
 };
 
 use crate::msg::Cw4ExecuteMsg;
@@ -73,17 +72,29 @@ impl Cw4Contract {
         Item::new(TOTAL_KEY).query(querier, self.addr())
     }
 
-    /// Check if this address is a member and returns its weight
+    /// Check if this address is a member and returns its weight.
+    /// We dont use the group addr's is_member function because it queries using the key as &Addr, not Vec<u8> of CannonicalAddr in the latest version
+    /// The current production group addr on Oraichain is using the v0.13.2 version of CosmWasm, which uses CannonicalAddr
     pub fn is_member(
         &self,
         querier: &QuerierWrapper,
+        api: &dyn Api,
         member: &Addr,
         height: Option<u64>,
     ) -> StdResult<Option<u64>> {
-        match height {
+        let mut old_ver_height = match height {
             Some(height) => self.member_at_height(querier, member.to_string(), height.into()),
-            None => Map::new(MEMBERS_KEY).query(querier, self.addr(), member),
+            None => Map::new(MEMBERS_KEY).query(
+                querier,
+                self.addr(),
+                api.addr_canonicalize(member.as_str())?.to_vec(),
+            ),
+        }?;
+        // if None then we try to query using the new way
+        if old_ver_height.is_none() {
+            old_ver_height = Map::new(MEMBERS_KEY).query(querier, self.addr(), member)?;
         }
+        Ok(old_ver_height)
     }
 
     /// Check if this address is a member, and if its weight is >= 1
