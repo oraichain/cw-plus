@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, QuerierWrapper};
+use cosmwasm_std::{Addr, Api, QuerierWrapper};
 use cw3::{Ballot, DepositInfo, Proposal};
 use cw4::Cw4Contract;
 use cw_storage_plus::{Item, Map};
@@ -34,12 +34,17 @@ impl Config {
     // - Member: any member of the voting group is authorized
     // - Only: only passed address is authorized
     // - None: Everyone are authorized
-    pub fn authorize(&self, querier: &QuerierWrapper, sender: &Addr) -> Result<(), ContractError> {
+    pub fn authorize(
+        &self,
+        querier: &QuerierWrapper,
+        api: &dyn Api,
+        sender: &Addr,
+    ) -> Result<(), ContractError> {
         if let Some(executor) = &self.executor {
             match executor {
                 Executor::Member => {
                     self.group_addr
-                        .is_member(querier, sender, None)?
+                        .is_member(querier, api, sender, None)?
                         .ok_or(ContractError::Unauthorized {})?;
                 }
                 Executor::Only(addr) => {
