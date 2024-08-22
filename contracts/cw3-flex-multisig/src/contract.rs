@@ -860,7 +860,7 @@ mod tests {
 
         let required_weight = 4;
         let voting_period = Duration::Time(2000000);
-        let (flex_addr, _) =
+        let (flex_addr, group_addr) =
             setup_test_case_fixed(&mut app, required_weight, voting_period, init_funds, false);
 
         let config: Config = app
@@ -872,7 +872,7 @@ mod tests {
             Config {
                 threshold: Threshold::AbsoluteCount { weight: 4 },
                 max_voting_period: Duration::Time(2000000),
-                group_addr: Cw4Contract(Addr::unchecked("contract0".to_string())),
+                group_addr: Cw4Contract(group_addr),
                 executor: None,
                 proposal_deposit: None,
             }
@@ -1519,7 +1519,7 @@ mod tests {
         let execution = ExecuteMsg::Execute { proposal_id };
         let err = app
             .execute_contract(
-                Addr::unchecked(Addr::unchecked("anyone")), // anyone is not allowed to execute
+                Addr::unchecked(SOMEBODY), // anyone is not allowed to execute
                 flex_addr.clone(),
                 &execution,
                 &[],

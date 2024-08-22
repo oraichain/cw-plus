@@ -4,6 +4,7 @@ use cosmwasm_std::{
 };
 use cw3::{Ballot, Status, Votes};
 use cw_utils::{Expiration, Threshold};
+use easy_addr::addr;
 
 use crate::{
     migrate::{migrate_ballots, migrate_proposal, OldProposal, OLD_BALLOTS, OLD_PROPOSALS},
@@ -45,7 +46,8 @@ fn test_proposal_migration() {
 #[test]
 fn test_ballots_migration() {
     let mut deps = mock_dependencies();
-    let voter = deps.as_ref().api.addr_canonicalize("foobar").unwrap();
+    let voter_str = addr!("somebody");
+    let voter = deps.as_ref().api.addr_canonicalize(voter_str).unwrap();
     let deps_mut = deps.as_mut();
     let api = deps_mut.api;
     OLD_BALLOTS
@@ -62,7 +64,7 @@ fn test_ballots_migration() {
     migrate_ballots(deps_mut.storage, api).unwrap();
 
     let proposal = BALLOTS
-        .load(&deps.storage, (1u64, &Addr::unchecked("foobar")))
+        .load(&deps.storage, (1u64, &Addr::unchecked(voter_str)))
         .unwrap();
     assert_eq!(proposal.weight, 1);
 }
