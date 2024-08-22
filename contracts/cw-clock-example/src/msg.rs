@@ -4,20 +4,18 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 pub struct InstantiateMsg {}
 
 #[cw_serde]
-pub enum ExecuteMsg {
-    Increment {},
-}
+pub enum ExecuteMsg {}
 
 // sudo msg
 #[cw_serde]
 pub enum SudoMsg {
-    ClockEndBlock {},
+    ClockEndBlock { hash: String },
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(u32)]
+    #[returns(crate::state::Config)]
     GetConfig {},
 }
 

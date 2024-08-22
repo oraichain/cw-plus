@@ -1,3 +1,10 @@
+use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
 
-pub const CONFIG: Item<u32> = Item::new("config");
+#[cw_serde]
+pub struct Config {
+    pub val: u32,
+    pub hash: String,
+}
+
+pub const CONFIG: Item<Config> = Item::new("config");
