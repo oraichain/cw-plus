@@ -1,13 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, HexBinary, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, HexBinary, MessageInfo, Response,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, AFTER_SUDO, CONFIG};
 
 const CONTRACT_NAME: &str = "crates.io:cw-clock-example";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -28,6 +29,7 @@ pub fn instantiate(
             hash: "".to_string(),
         },
     )?;
+    AFTER_SUDO.save(deps.storage, &0)?;
 
     Ok(Response::new().add_attribute("method", "instantiate"))
 }
@@ -42,21 +44,34 @@ fn increment(deps: DepsMut, hash: String) -> Result<(), ContractError> {
 
 #[entry_point]
 pub fn execute(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: ExecuteMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    unimplemented!();
+    match msg {
+        ExecuteMsg::AfterSudo {} => {
+            let mut config = AFTER_SUDO.load(deps.storage)?;
+            config += 5;
+            AFTER_SUDO.save(deps.storage, &config)?;
+            Ok(Response::new())
+        }
+    }
 }
 
 // sudo msg
 #[entry_point]
-pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::ClockEndBlock { hash } => {
             increment(deps, hash)?;
-            Ok(Response::new())
+            Ok(
+                Response::new().add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: env.contract.address.into_string(),
+                    msg: to_json_binary(&ExecuteMsg::AfterSudo {})?,
+                    funds: vec![],
+                })),
+            )
         }
     }
 }
@@ -65,6 +80,7 @@ pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, Contract
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetConfig {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::GetAfterSudo {} => to_json_binary(&AFTER_SUDO.load(deps.storage)?),
     }
 }
 

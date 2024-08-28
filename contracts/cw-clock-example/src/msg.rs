@@ -4,7 +4,9 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 pub struct InstantiateMsg {}
 
 #[cw_serde]
-pub enum ExecuteMsg {}
+pub enum ExecuteMsg {
+    AfterSudo {},
+}
 
 // sudo msg
 #[cw_serde]
@@ -17,6 +19,8 @@ pub enum SudoMsg {
 pub enum QueryMsg {
     #[returns(crate::state::Config)]
     GetConfig {},
+    #[returns(u64)]
+    GetAfterSudo {},
 }
 
 // We define a custom struct for each query response
