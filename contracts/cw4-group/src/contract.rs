@@ -221,6 +221,21 @@ pub fn query_list_members(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let mut members = msg.members;
+    validate_unique_members(&mut members)?;
+    let mut total = Uint64::zero();
+    for member in members.into_iter() {
+        let member_weight = Uint64::from(member.weight);
+        total = total.checked_add(member_weight)?;
+        let member_addr = deps.api.addr_validate(&member.addr)?;
+        MEMBERS.save(
+            deps.storage,
+            &member_addr,
+            &member_weight.u64(),
+            env.block.height,
+        )?;
+    }
+    TOTAL.save(deps.storage, &total.u64(), env.block.height)?;
     Ok(Response::default())
 }

@@ -26,7 +26,9 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {}
+pub struct MigrateMsg {
+    pub members: Vec<Member>,
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
