@@ -16,7 +16,7 @@ pub const TOTAL: SnapshotItem<u64> = SnapshotItem::new(
     Strategy::EveryBlock,
 );
 
-pub const MEMBERS: SnapshotMap<&Addr, u64> = SnapshotMap::new(
+pub const MEMBERS: SnapshotMap<&[u8], u64> = SnapshotMap::new(
     MEMBERS_KEY,
     MEMBERS_CHECKPOINTS,
     MEMBERS_CHANGELOG,

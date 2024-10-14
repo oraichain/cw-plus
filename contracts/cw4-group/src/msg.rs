@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
 use cw4::Member;
 
 #[cw_serde]
@@ -26,9 +27,7 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {
-    pub members: Vec<Member>,
-}
+pub struct MigrateMsg {}
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -39,7 +38,7 @@ pub enum QueryMsg {
     TotalWeight { at_height: Option<u64> },
     #[returns(cw4::MemberListResponse)]
     ListMembers {
-        start_after: Option<String>,
+        start_after: Option<Addr>,
         limit: Option<u32>,
     },
     #[returns(cw4::MemberResponse)]
