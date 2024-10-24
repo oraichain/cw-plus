@@ -1,4 +1,3 @@
-use cosmwasm_std::Addr;
 use cw4::{
     MEMBERS_CHANGELOG, MEMBERS_CHECKPOINTS, MEMBERS_KEY, TOTAL_KEY, TOTAL_KEY_CHANGELOG,
     TOTAL_KEY_CHECKPOINTS,
@@ -16,7 +15,7 @@ pub const TOTAL: SnapshotItem<u64> = SnapshotItem::new(
     Strategy::EveryBlock,
 );
 
-pub const MEMBERS: SnapshotMap<&Addr, u64> = SnapshotMap::new(
+pub const MEMBERS: SnapshotMap<&[u8], u64> = SnapshotMap::new(
     MEMBERS_KEY,
     MEMBERS_CHECKPOINTS,
     MEMBERS_CHANGELOG,

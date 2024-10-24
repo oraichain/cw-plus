@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{from_json, Addr, Api, DepsMut, OwnedDeps, Querier, Storage, SubMsg};
-use cw4::{member_key, Member, MemberChangedHookMsg, MemberDiff, TOTAL_KEY};
+use cw4::{member_key_raw, Member, MemberChangedHookMsg, MemberDiff, TOTAL_KEY};
 use cw_controllers::{AdminError, HookError};
 
 use crate::contract::{
@@ -413,12 +413,14 @@ fn raw_queries_work() {
     assert_eq!(17, total);
 
     // get member votes from raw key
-    let member2_raw = deps.storage.get(&member_key(USER2)).unwrap();
-    let member2: u64 = from_json(member2_raw).unwrap();
+    let member2_canon = deps.api.addr_canonicalize(&USER2).unwrap();
+    let member2_raw = deps.storage.get(&member_key_raw(&member2_canon)).unwrap();
+    let member2: u64 = from_json(&member2_raw).unwrap();
     assert_eq!(6, member2);
 
-    // and execute misses
-    let member3_raw = deps.storage.get(&member_key(USER3));
+    // and handle misses
+    let member3_canon = deps.api.addr_canonicalize(&USER3).unwrap();
+    let member3_raw = deps.storage.get(&member_key_raw(&member3_canon));
     assert_eq!(None, member3_raw);
 }
 

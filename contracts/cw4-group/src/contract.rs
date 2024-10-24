@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StdResult, SubMsg, Uint64,
+    attr, to_json_binary, Addr, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo, Order,
+    Response, StdResult, SubMsg, Uint64,
 };
 use cw2::set_contract_version;
 use cw4::{
@@ -10,7 +10,7 @@ use cw4::{
     TotalWeightResponse,
 };
 use cw_storage_plus::Bound;
-use cw_utils::maybe_addr;
+use cw_utils::maybe_canonical;
 
 use crate::error::ContractError;
 use crate::helpers::validate_unique_members;
@@ -55,7 +55,7 @@ pub fn create(
     for member in members.into_iter() {
         let member_weight = Uint64::from(member.weight);
         total = total.checked_add(member_weight)?;
-        let member_addr = deps.api.addr_validate(&member.addr)?;
+        let member_addr = deps.api.addr_canonicalize(&member.addr)?;
         MEMBERS.save(deps.storage, &member_addr, &member_weight.u64(), height)?;
     }
     TOTAL.save(deps.storage, &total.u64(), height)?;
@@ -133,7 +133,7 @@ pub fn update_members(
 
     // add all new members and update total
     for add in to_add.into_iter() {
-        let add_addr = deps.api.addr_validate(&add.addr)?;
+        let add_addr = deps.api.addr_canonicalize(&add.addr)?;
         MEMBERS.update(deps.storage, &add_addr, height, |old| -> StdResult<_> {
             total = total.checked_sub(Uint64::from(old.unwrap_or_default()))?;
             total = total.checked_add(Uint64::from(add.weight))?;
@@ -143,7 +143,7 @@ pub fn update_members(
     }
 
     for remove in to_remove.into_iter() {
-        let remove_addr = deps.api.addr_validate(&remove)?;
+        let remove_addr = deps.api.addr_canonicalize(&remove)?;
         let old = MEMBERS.may_load(deps.storage, &remove_addr)?;
         // Only process this if they were actually in the list before
         if let Some(weight) = old {
@@ -185,7 +185,7 @@ pub fn query_total_weight(deps: Deps, height: Option<u64>) -> StdResult<TotalWei
 }
 
 pub fn query_member(deps: Deps, addr: String, height: Option<u64>) -> StdResult<MemberResponse> {
-    let addr = deps.api.addr_validate(&addr)?;
+    let addr = deps.api.addr_canonicalize(&addr)?;
     let weight = match height {
         Some(h) => MEMBERS.may_load_at_height(deps.storage, &addr, h),
         None => MEMBERS.may_load(deps.storage, &addr),
@@ -199,19 +199,23 @@ const DEFAULT_LIMIT: u32 = 10;
 
 pub fn query_list_members(
     deps: Deps,
-    start_after: Option<String>,
+    start_after: Option<Addr>,
     limit: Option<u32>,
 ) -> StdResult<MemberListResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    let addr = maybe_addr(deps.api, start_after)?;
-    let start = addr.as_ref().map(Bound::exclusive);
+    let canon = maybe_canonical(deps.api, start_after)?;
+    let start = canon.as_deref().map(Bound::exclusive);
 
     let members = MEMBERS
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
             item.map(|(addr, weight)| Member {
-                addr: addr.into(),
+                addr: deps
+                    .api
+                    .addr_humanize(&CanonicalAddr::from(addr))
+                    .unwrap()
+                    .to_string(),
                 weight,
             })
         })
