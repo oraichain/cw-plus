@@ -27,7 +27,9 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {}
+pub struct MigrateMsg {
+    pub new_admin: Addr,
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
